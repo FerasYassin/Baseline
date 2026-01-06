@@ -26,48 +26,6 @@
             height: 100vh; 
             overflow: hidden;
         }
-        .slide-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-        .slide-wrapper {
-            position: relative;
-            height: 100%;
-            width: 100%;
-        }
-        .slide {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.5s ease;
-        }
-        .slide.active {
-            transform: translateX(0);
-            opacity: 1;
-            z-index: 2;
-        }
-        .slide.exit-left {
-            transform: translateX(-100%);
-            opacity: 0;
-            z-index: 1;
-        }
-        .slide.exit-right {
-            transform: translateX(100%);
-            opacity: 0;
-            z-index: 1;
-        }
-        .slide.enter-left {
-            transform: translateX(-100%);
-            opacity: 0;
-            z-index: 1;
-        }
-        .slide.enter-right {
-            transform: translateX(100%);
-            opacity: 0;
-            z-index: 1;
-        }
         .day-panel {
             position: fixed;
             bottom: 0;
@@ -98,6 +56,22 @@
         .day-panel-overlay.open {
             opacity: 1;
             pointer-events: auto;
+        }
+        .slide-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        .slide-wrapper {
+            display: flex;
+            height: 100%;
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .slide {
+            min-width: 100%;
+            height: 100%;
+            flex-shrink: 0;
         }
     </style>
 </head>
@@ -165,7 +139,7 @@
         const DisciplineApp = () => {
             const tabs = ['daily', 'weekly', 'monthly', 'yearly'];
             const [activeTabIndex, setActiveTabIndex] = useState(0);
-            const [previousTabIndex, setPreviousTabIndex] = useState(0);
+            const [slideDirection, setSlideDirection] = useState('right');
             const [showAddTask, setShowAddTask] = useState(false);
             const [newTaskText, setNewTaskText] = useState('');
             const [selectedTimeframe, setSelectedTimeframe] = useState('daily');
@@ -178,8 +152,7 @@
             const touchStartX = useRef(0);
             const touchStartY = useRef(0);
             const isDragging = useRef(false);
-            const currentTranslate = useRef(0);
-            const slideRef = useRef(null);
+            const slideWrapperRef = useRef(null);
             const monthTouchStartX = useRef(0);
 
             const loadTasks = () => {
@@ -332,16 +305,8 @@
             };
 
             const handleTabChange = (newIndex) => {
-                setPreviousTabIndex(activeTabIndex);
+                setSlideDirection(newIndex > activeTabIndex ? 'left' : 'right');
                 setActiveTabIndex(newIndex);
-            };
-
-            const getSlideClass = (tabIndex) => {
-                if (tabIndex === activeTabIndex) return 'active';
-                if (tabIndex === previousTabIndex) {
-                    return activeTabIndex > previousTabIndex ? 'exit-left' : 'exit-right';
-                }
-                return activeTabIndex > previousTabIndex ? 'enter-right' : 'enter-left';
             };
 
             const handleTaskTouchStart = (e) => {
@@ -351,7 +316,7 @@
             };
 
             const handleTaskTouchMove = (e) => {
-                if (!slideRef.current) return;
+                if (!slideWrapperRef.current) return;
                 
                 const touchX = e.touches[0].clientX;
                 const touchY = e.touches[0].clientY;
@@ -360,22 +325,21 @@
 
                 if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
                     isDragging.current = true;
-                    e.preventDefault();
-                    currentTranslate.current = deltaX;
-                    slideRef.current.style.transform = `translateX(${deltaX}px)`;
-                    slideRef.current.style.transition = 'none';
+                    const currentOffset = -activeTabIndex * 100;
+                    const dragPercent = (deltaX / window.innerWidth) * 100;
+                    slideWrapperRef.current.style.transform = `translateX(${currentOffset + dragPercent}%)`;
+                    slideWrapperRef.current.style.transition = 'none';
                 }
             };
 
             const handleTaskTouchEnd = (e) => {
-                if (!isDragging.current) return;
+                if (!isDragging.current || !slideWrapperRef.current) return;
                 
-                const deltaX = currentTranslate.current;
+                const touchEndX = e.changedTouches[0].clientX;
+                const deltaX = touchEndX - touchStartX.current;
                 
-                if (slideRef.current) {
-                    slideRef.current.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                    slideRef.current.style.transform = 'translateX(0)';
-                }
+                slideWrapperRef.current.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                slideWrapperRef.current.style.transform = `translateX(-${activeTabIndex * 100}%)`;
 
                 if (Math.abs(deltaX) > 50) {
                     if (deltaX > 0 && activeTabIndex > 0) {
@@ -385,7 +349,6 @@
                     }
                 }
 
-                currentTranslate.current = 0;
                 isDragging.current = false;
             };
 
@@ -627,4 +590,35 @@
                         onTouchStart={handleTaskTouchStart}
                         onTouchMove={handleTaskTouchMove}
                         onTouchEnd={handleTaskTouchEnd}>
-                        <div
+                        <div ref={slideWrapperRef} className="slide-wrapper" style={{ transform: `translateX(-${activeTabIndex * 100}%)` }}>
+                            {tabs.map((tab) => (
+                                <div key={tab} className="slide">
+                                    <div className="p-6 space-y-3 h-full overflow-auto">
+                                        {tasks[tab].map(task => (
+                                            <div key={task.id} className="bg-zinc-900 rounded-lg p-4 flex items-center justify-between border border-zinc-800">
+                                                <button onClick={() => toggleTask(tab, task.id)} className="flex items-center gap-3 flex-1">
+                                                    {task.completed ? <CheckSquareIcon /> : <SquareIcon />}
+                                                    <span className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
+                                                </button>
+                                                <button onClick={() => deleteTask(tab, task.id)} className="ml-2 text-gray-600 hover:text-red-500"><XIcon /></button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="p-6 bg-zinc-900 border-t border-zinc-800">
+                        <button onClick={() => setShowAddTask(true)}
+                            className="w-full bg-white text-black py-4 rounded-lg font-semibold flex items-center justify-center gap-2">
+                            <PlusIcon />Add Task
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<DisciplineApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
