@@ -26,13 +26,37 @@
             height: 100vh; 
             overflow: hidden;
         }
+        
+        /* Calendar slide animation */
+        @keyframes slideInFromRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutToRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        .calendar-enter { animation: slideInFromRight 0.5s ease-out; }
+        .calendar-exit { animation: slideOutToRight 0.5s ease-out; }
+        
+        /* Task list slide animations */
+        @keyframes slideInFromLeft {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutToLeft {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-100%); opacity: 0; }
+        }
+        .tasks-enter-left { animation: slideInFromLeft 0.5s ease-out; }
+        .tasks-enter-right { animation: slideInFromRight 0.5s ease-out; }
     </style>
 </head>
 <body>
     <div id="root"></div>
     
     <script type="text/babel" data-type="module">
-        const { useState } = React;
+        const { useState, useEffect } = React;
         
         const CalendarIcon = () => (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -72,10 +96,12 @@
 
         const DisciplineApp = () => {
             const [activeTab, setActiveTab] = useState('daily');
+            const [previousTab, setPreviousTab] = useState('daily');
             const [showAddTask, setShowAddTask] = useState(false);
             const [newTaskText, setNewTaskText] = useState('');
             const [selectedTimeframe, setSelectedTimeframe] = useState('daily');
             const [calendarView, setCalendarView] = useState(false);
+            const [animationKey, setAnimationKey] = useState(0);
             
             const loadTasks = () => {
                 const saved = localStorage.getItem('disciplineTasks');
@@ -109,12 +135,54 @@
                 };
             };
 
+            const loadDailyHistory = () => {
+                const saved = localStorage.getItem('dailyHistory');
+                if (saved) {
+                    return JSON.parse(saved);
+                }
+                return {};
+            };
+
             const [tasks, setTasks] = useState(loadTasks());
+            const [dailyHistory, setDailyHistory] = useState(loadDailyHistory());
             const [streakDays] = useState(7);
 
-            React.useEffect(() => {
+            useEffect(() => {
                 localStorage.setItem('disciplineTasks', JSON.stringify(tasks));
             }, [tasks]);
+
+            useEffect(() => {
+                localStorage.setItem('dailyHistory', JSON.stringify(dailyHistory));
+            }, [dailyHistory]);
+
+            // Save today's progress at end of day
+            useEffect(() => {
+                const checkEndOfDay = () => {
+                    const now = new Date();
+                    const todayKey = now.toISOString().split('T')[0];
+                    
+                    // Check if we've crossed into a new day
+                    const lastChecked = localStorage.getItem('lastDayChecked');
+                    if (lastChecked !== todayKey) {
+                        // Save yesterday's progress
+                        const yesterday = new Date(now);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        const yesterdayKey = yesterday.toISOString().split('T')[0];
+                        
+                        const percentage = calculatePercentage(tasks.daily);
+                        setDailyHistory(prev => ({
+                            ...prev,
+                            [yesterdayKey]: percentage
+                        }));
+                        
+                        localStorage.setItem('lastDayChecked', todayKey);
+                    }
+                };
+
+                checkEndOfDay();
+                const interval = setInterval(checkEndOfDay, 60000); // Check every minute
+                return () => clearInterval(interval);
+            }, [tasks.daily]);
 
             const phrases = {
                 failing: [
@@ -246,21 +314,46 @@
             const generateCalendarData = () => {
                 const data = [];
                 const today = new Date();
+                const todayKey = today.toISOString().split('T')[0];
+                
                 for (let i = 29; i >= 0; i--) {
                     const date = new Date(today);
                     date.setDate(date.getDate() - i);
-                    const percentage = Math.floor(Math.random() * 100);
+                    const dateKey = date.toISOString().split('T')[0];
+                    
+                    let percentage;
+                    let color;
+                    
+                    if (dateKey === todayKey) {
+                        // Today is always grey (incomplete)
+                        percentage = calculatePercentage(tasks.daily);
+                        color = 'grey';
+                    } else if (dailyHistory[dateKey] !== undefined) {
+                        // Use saved history for past days
+                        percentage = dailyHistory[dateKey];
+                        color = percentage >= 75 ? 'green' : percentage >= 50 ? 'yellow' : 'red';
+                    } else {
+                        // Mock data for days before user started tracking
+                        percentage = Math.floor(Math.random() * 100);
+                        color = percentage >= 75 ? 'green' : percentage >= 50 ? 'yellow' : 'red';
+                    }
+                    
                     data.push({
-                        date: date.toISOString().split('T')[0],
+                        date: dateKey,
                         day: date.getDate(),
                         percentage,
-                        color: percentage >= 75 ? 'green' : percentage >= 50 ? 'yellow' : 'red'
+                        color
                     });
                 }
                 return data;
             };
 
-            const [calendarData] = useState(generateCalendarData());
+            const [calendarData, setCalendarData] = useState(generateCalendarData());
+
+            // Update calendar when tasks change
+            useEffect(() => {
+                setCalendarData(generateCalendarData());
+            }, [tasks, dailyHistory]);
 
             const calculatePercentage = (taskList) => {
                 if (taskList.length === 0) return 0;
@@ -272,6 +365,23 @@
                 if (percentage >= 75) return '#10b981';
                 if (percentage >= 50) return '#f59e0b';
                 return '#ef4444';
+            };
+
+            const getTabIndex = (tab) => {
+                const tabs = ['daily', 'weekly', 'monthly', 'yearly'];
+                return tabs.indexOf(tab);
+            };
+
+            const handleTabChange = (newTab) => {
+                setPreviousTab(activeTab);
+                setActiveTab(newTab);
+                setAnimationKey(prev => prev + 1);
+            };
+
+            const getAnimationClass = () => {
+                const prevIndex = getTabIndex(previousTab);
+                const currIndex = getTabIndex(activeTab);
+                return currIndex > prevIndex ? 'tasks-enter-right' : 'tasks-enter-left';
             };
 
             const toggleTask = (timeframe, taskId) => {
@@ -311,7 +421,7 @@
             const message = getMessage(percentage);
 
             if (calendarView) {
-                return React.createElement('div', { className: 'h-screen bg-black flex flex-col' },
+                return React.createElement('div', { className: 'h-screen bg-black flex flex-col calendar-enter' },
                     React.createElement('div', { className: 'bg-zinc-900 border-b border-zinc-800 px-6 py-4' },
                         React.createElement('div', { className: 'flex items-center justify-between' },
                             React.createElement('button', { 
@@ -344,7 +454,8 @@
                                     key: idx,
                                     className: 'aspect-square rounded-lg flex flex-col items-center justify-center',
                                     style: {
-                                        backgroundColor: day.color === 'green' ? '#10b981' : 
+                                        backgroundColor: day.color === 'grey' ? '#52525b' :
+                                                       day.color === 'green' ? '#10b981' : 
                                                        day.color === 'yellow' ? '#f59e0b' : '#ef4444'
                                     }
                                 },
@@ -427,7 +538,7 @@
                         ['daily', 'weekly', 'monthly', 'yearly'].map(tab =>
                             React.createElement('button', {
                                 key: tab,
-                                onClick: () => setActiveTab(tab),
+                                onClick: () => handleTabChange(tab),
                                 className: `px-4 py-2 text-sm font-medium capitalize ${
                                     activeTab === tab
                                         ? 'text-white border-b-2 border-white'
@@ -437,8 +548,14 @@
                         )
                     )
                 ),
-                React.createElement('div', { className: 'flex-1 overflow-auto' },
-                    React.createElement('div', { className: 'p-6 space-y-3' },
+                React.createElement('div', { 
+                    className: 'flex-1 overflow-auto',
+                    style: { position: 'relative' }
+                },
+                    React.createElement('div', { 
+                        key: animationKey,
+                        className: `p-6 space-y-3 ${getAnimationClass()}`
+                    },
                         currentTasks.map(task =>
                             React.createElement('div', {
                                 key: task.id,
