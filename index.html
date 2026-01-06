@@ -33,19 +33,71 @@
             overflow: hidden;
         }
         .slide-wrapper {
-            display: flex;
+            position: relative;
             height: 100%;
-            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            width: 100%;
         }
         .slide {
-            min-width: 100%;
-            height: 100%;
-        }
-        .swipe-area {
-            position: relative;
+            position: absolute;
             width: 100%;
             height: 100%;
-            touch-action: pan-y;
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.5s ease;
+        }
+        .slide.active {
+            transform: translateX(0);
+            opacity: 1;
+            z-index: 2;
+        }
+        .slide.exit-left {
+            transform: translateX(-100%);
+            opacity: 0;
+            z-index: 1;
+        }
+        .slide.exit-right {
+            transform: translateX(100%);
+            opacity: 0;
+            z-index: 1;
+        }
+        .slide.enter-left {
+            transform: translateX(-100%);
+            opacity: 0;
+            z-index: 1;
+        }
+        .slide.enter-right {
+            transform: translateX(100%);
+            opacity: 0;
+            z-index: 1;
+        }
+        .day-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #18181b;
+            border-radius: 20px 20px 0 0;
+            max-height: 70vh;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 100;
+        }
+        .day-panel.open {
+            transform: translateY(0);
+        }
+        .day-panel-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 99;
+        }
+        .day-panel-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
         }
     </style>
 </head>
@@ -113,16 +165,22 @@
         const DisciplineApp = () => {
             const tabs = ['daily', 'weekly', 'monthly', 'yearly'];
             const [activeTabIndex, setActiveTabIndex] = useState(0);
+            const [previousTabIndex, setPreviousTabIndex] = useState(0);
             const [showAddTask, setShowAddTask] = useState(false);
             const [newTaskText, setNewTaskText] = useState('');
             const [selectedTimeframe, setSelectedTimeframe] = useState('daily');
             const [calendarView, setCalendarView] = useState(false);
             const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
             const [showNotifications, setShowNotifications] = useState(false);
+            const [selectedDay, setSelectedDay] = useState(null);
+            const [showDayPanel, setShowDayPanel] = useState(false);
             
             const touchStartX = useRef(0);
             const touchStartY = useRef(0);
-            const isSwiping = useRef(false);
+            const isDragging = useRef(false);
+            const currentTranslate = useRef(0);
+            const slideRef = useRef(null);
+            const monthTouchStartX = useRef(0);
 
             const loadTasks = () => {
                 try {
@@ -168,7 +226,6 @@
                 const today = new Date();
                 let streak = 0;
                 
-                // Check backwards from yesterday
                 for (let i = 1; i < 365; i++) {
                     const checkDate = new Date(today);
                     checkDate.setDate(checkDate.getDate() - i);
@@ -198,34 +255,10 @@
             }, [dailyHistory]);
 
             const phrases = {
-                failing: [
-                    "This isn't discipline. Do better.",
-                    "Below standard. Push harder.",
-                    "You're capable of more than this.",
-                    "Not acceptable. Get to work.",
-                    "This is drift, not discipline.",
-                ],
-                bareMinimum: [
-                    "Bare minimum met. You can do better.",
-                    "50%. Acceptable, not exceptional.",
-                    "You passed. Now aim higher.",
-                    "Average completed. Push for excellence.",
-                    "Meeting the standard isn't beating it.",
-                ],
-                strong: [
-                    "Solid work. Keep going.",
-                    "Strong effort. Don't let up.",
-                    "You're executing. Stay consistent.",
-                    "This is what discipline looks like.",
-                    "Above standard. Maintain this.",
-                ],
-                perfect: [
-                    "100%. Excellence achieved.",
-                    "Flawless execution. Don't get comfortable.",
-                    "Perfect. Now do it again tomorrow.",
-                    "Complete domination. This is your baseline.",
-                    "You owned today. Make it a habit.",
-                ],
+                failing: ["This isn't discipline. Do better.", "Below standard. Push harder.", "You're capable of more than this.", "Not acceptable. Get to work.", "This is drift, not discipline."],
+                bareMinimum: ["Bare minimum met. You can do better.", "50%. Acceptable, not exceptional.", "You passed. Now aim higher.", "Average completed. Push for excellence.", "Meeting the standard isn't beating it."],
+                strong: ["Solid work. Keep going.", "Strong effort. Don't let up.", "You're executing. Stay consistent.", "This is what discipline looks like.", "Above standard. Maintain this."],
+                perfect: ["100%. Excellence achieved.", "Flawless execution. Don't get comfortable.", "Perfect. Now do it again tomorrow.", "Complete domination. This is your baseline.", "You owned today. Make it a habit."],
             };
 
             const getMessage = (percentage) => {
@@ -269,16 +302,22 @@
 
                     let percentage = 0;
                     let color = 'grey';
+                    let tasksSnapshot = null;
 
                     if (dateKey === todayKey) {
                         percentage = calculatePercentage(tasks.daily);
                         color = 'grey';
+                        tasksSnapshot = [...tasks.daily];
                     } else if (date < today && dailyHistory[dateKey] !== undefined) {
                         percentage = dailyHistory[dateKey];
                         color = percentage >= 75 ? 'green' : percentage >= 50 ? 'yellow' : 'red';
+                        const savedTasks = localStorage.getItem(`tasks_${dateKey}`);
+                        if (savedTasks) {
+                            tasksSnapshot = JSON.parse(savedTasks);
+                        }
                     }
 
-                    days.push({ day, date: dateKey, percentage, color });
+                    days.push({ day, date: dateKey, percentage, color, tasks: tasksSnapshot });
                 }
 
                 return { days, monthName };
@@ -292,40 +331,98 @@
                 return '#ef4444';
             };
 
-            const handleTouchStart = (e, area) => {
+            const handleTabChange = (newIndex) => {
+                setPreviousTabIndex(activeTabIndex);
+                setActiveTabIndex(newIndex);
+            };
+
+            const getSlideClass = (tabIndex) => {
+                if (tabIndex === activeTabIndex) return 'active';
+                if (tabIndex === previousTabIndex) {
+                    return activeTabIndex > previousTabIndex ? 'exit-left' : 'exit-right';
+                }
+                return activeTabIndex > previousTabIndex ? 'enter-right' : 'enter-left';
+            };
+
+            const handleTaskTouchStart = (e) => {
                 touchStartX.current = e.touches[0].clientX;
                 touchStartY.current = e.touches[0].clientY;
-                isSwiping.current = false;
+                isDragging.current = false;
             };
 
-            const handleTouchMove = (e) => {
-                isSwiping.current = true;
+            const handleTaskTouchMove = (e) => {
+                if (!slideRef.current) return;
+                
+                const touchX = e.touches[0].clientX;
+                const touchY = e.touches[0].clientY;
+                const deltaX = touchX - touchStartX.current;
+                const deltaY = touchY - touchStartY.current;
+
+                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+                    isDragging.current = true;
+                    e.preventDefault();
+                    currentTranslate.current = deltaX;
+                    slideRef.current.style.transform = `translateX(${deltaX}px)`;
+                    slideRef.current.style.transition = 'none';
+                }
             };
 
-            const handleTouchEnd = (e, area) => {
-                if (!isSwiping.current) return;
+            const handleTaskTouchEnd = (e) => {
+                if (!isDragging.current) return;
+                
+                const deltaX = currentTranslate.current;
+                
+                if (slideRef.current) {
+                    slideRef.current.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    slideRef.current.style.transform = 'translateX(0)';
+                }
 
-                const touchEndX = e.changedTouches[0].clientX;
-                const touchEndY = e.changedTouches[0].clientY;
-                const deltaX = touchEndX - touchStartX.current;
-                const deltaY = touchEndY - touchStartY.current;
-
-                // Determine if horizontal or vertical swipe
-                if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-                    if (area === 'tabs') {
-                        // Horizontal swipe on tasks
-                        if (deltaX > 0 && activeTabIndex > 0) {
-                            setActiveTabIndex(activeTabIndex - 1);
-                        } else if (deltaX < 0 && activeTabIndex < tabs.length - 1) {
-                            setActiveTabIndex(activeTabIndex + 1);
-                        }
-                    }
-                } else if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 50) {
-                    if (area === 'header' && deltaY < 0) {
-                        // Swipe up on header area to go to calendar
-                        setCalendarView(true);
+                if (Math.abs(deltaX) > 50) {
+                    if (deltaX > 0 && activeTabIndex > 0) {
+                        handleTabChange(activeTabIndex - 1);
+                    } else if (deltaX < 0 && activeTabIndex < tabs.length - 1) {
+                        handleTabChange(activeTabIndex + 1);
                     }
                 }
+
+                currentTranslate.current = 0;
+                isDragging.current = false;
+            };
+
+            const handleMonthTouchStart = (e) => {
+                monthTouchStartX.current = e.touches[0].clientX;
+            };
+
+            const handleMonthTouchEnd = (e) => {
+                const deltaX = e.changedTouches[0].clientX - monthTouchStartX.current;
+                
+                if (Math.abs(deltaX) > 50) {
+                    if (deltaX > 0) {
+                        setCurrentMonthOffset(currentMonthOffset - 1);
+                    } else if (deltaX < 0 && currentMonthOffset < 0) {
+                        setCurrentMonthOffset(currentMonthOffset + 1);
+                    }
+                }
+            };
+
+            const handleHeaderTouchStart = (e) => {
+                touchStartY.current = e.touches[0].clientY;
+            };
+
+            const handleHeaderTouchEnd = (e) => {
+                const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+                if (deltaY < -50) {
+                    setCalendarView(true);
+                }
+            };
+
+            const handleDayClick = (day) => {
+                if (!day || !day.tasks) return;
+                const today = new Date().toISOString().split('T')[0];
+                if (day.date >= today) return;
+                
+                setSelectedDay(day);
+                setShowDayPanel(true);
             };
 
             const toggleTask = (timeframe, taskId) => {
@@ -379,7 +476,9 @@
                                 <div className="text-4xl">🔥</div>
                             </div>
                         </div>
-                        <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-3">
+                        <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-3"
+                            onTouchStart={handleMonthTouchStart}
+                            onTouchEnd={handleMonthTouchEnd}>
                             <div className="flex items-center justify-between px-12">
                                 <button onClick={() => setCurrentMonthOffset(currentMonthOffset - 1)} className="text-gray-400 hover:text-white">
                                     <ChevronLeftIcon />
@@ -397,7 +496,8 @@
                                 ))}
                                 {monthData.days.map((day, idx) =>
                                     day ? (
-                                        <div key={idx} className="aspect-square rounded-lg flex flex-col items-center justify-center"
+                                        <button key={idx} onClick={() => handleDayClick(day)}
+                                            className="aspect-square rounded-lg flex flex-col items-center justify-center"
                                             style={{
                                                 backgroundColor: day.color === 'grey' ? '#52525b' :
                                                     day.color === 'green' ? '#10b981' :
@@ -405,10 +505,40 @@
                                             }}>
                                             <div className="text-white text-sm font-semibold">{day.day}</div>
                                             {day.color !== 'grey' && <div className="text-white text-xs">{day.percentage}%</div>}
-                                        </div>
+                                        </button>
                                     ) : <div key={idx}></div>
                                 )}
                             </div>
+                        </div>
+                        <div className={`day-panel-overlay ${showDayPanel ? 'open' : ''}`} onClick={() => setShowDayPanel(false)}></div>
+                        <div className={`day-panel ${showDayPanel ? 'open' : ''}`}>
+                            {selectedDay && (
+                                <div className="p-6">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div>
+                                            <h2 className="text-xl font-bold text-white">
+                                                {new Date(selectedDay.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                            </h2>
+                                            <div className="text-3xl font-bold mt-2" style={{ color: getColor(selectedDay.percentage) }}>
+                                                {selectedDay.percentage}%
+                                            </div>
+                                        </div>
+                                        <button onClick={() => setShowDayPanel(false)} className="text-gray-400">
+                                            <XIcon />
+                                        </button>
+                                    </div>
+                                    <div className="space-y-2 max-h-96 overflow-auto">
+                                        {selectedDay.tasks && selectedDay.tasks.map(task => (
+                                            <div key={task.id} className="bg-zinc-800 rounded-lg p-3 flex items-center gap-3">
+                                                {task.completed ? <CheckSquareIcon /> : <SquareIcon />}
+                                                <span className={`text-left ${task.completed ? 'text-gray-500 line-through' : 'text-white'}`}>
+                                                    {task.text}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
@@ -465,12 +595,9 @@
 
             return (
                 <div className="h-screen bg-black flex flex-col">
-                    <div 
-                        className="bg-zinc-900 border-b border-zinc-800 px-6 py-4"
-                        onTouchStart={(e) => handleTouchStart(e, 'header')}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={(e) => handleTouchEnd(e, 'header')}
-                    >
+                    <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-4"
+                        onTouchStart={handleHeaderTouchStart}
+                        onTouchEnd={handleHeaderTouchEnd}>
                         <div className="flex items-center justify-between">
                             <h1 className="text-2xl font-bold text-white">Baseline.</h1>
                             <div className="flex gap-4">
@@ -489,7 +616,7 @@
                     <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-2">
                         <div className="flex gap-4">
                             {tabs.map((tab, index) => (
-                                <button key={tab} onClick={() => setActiveTabIndex(index)}
+                                <button key={tab} onClick={() => handleTabChange(index)}
                                     className={`px-4 py-2 text-sm font-medium capitalize ${activeTabIndex === index ? 'text-white border-b-2 border-white' : 'text-gray-500'}`}>
                                     {tab}
                                 </button>
@@ -497,39 +624,7 @@
                         </div>
                     </div>
                     <div className="slide-container flex-1"
-                        onTouchStart={(e) => handleTouchStart(e, 'tabs')}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={(e) => handleTouchEnd(e, 'tabs')}
-                    >
-                        <div className="slide-wrapper" style={{ transform: `translateX(-${activeTabIndex * 100}%)` }}>
-                            {tabs.map((tab) => (
-                                <div key={tab} className="slide">
-                                    <div className="p-6 space-y-3 h-full overflow-auto">
-                                        {tasks[tab].map(task => (
-                                            <div key={task.id} className="bg-zinc-900 rounded-lg p-4 flex items-center justify-between border border-zinc-800">
-                                                <button onClick={() => toggleTask(tab, task.id)} className="flex items-center gap-3 flex-1">
-                                                    {task.completed ? <CheckSquareIcon /> : <SquareIcon />}
-                                                    <span className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
-                                                </button>
-                                                <button onClick={() => deleteTask(tab, task.id)} className="ml-2 text-gray-600 hover:text-red-500"><XIcon /></button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="p-6 bg-zinc-900 border-t border-zinc-800">
-                        <button onClick={() => setShowAddTask(true)}
-                            className="w-full bg-white text-black py-4 rounded-lg font-semibold flex items-center justify-center gap-2">
-                            <PlusIcon />Add Task
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
-        ReactDOM.render(<DisciplineApp />, document.getElementById('root'));
-    </script>
-</body>
-</html>
+                        onTouchStart={handleTaskTouchStart}
+                        onTouchMove={handleTaskTouchMove}
+                        onTouchEnd={handleTaskTouchEnd}>
+                        <div
