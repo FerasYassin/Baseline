@@ -26,20 +26,17 @@
             height: 100vh; 
             overflow: hidden;
         }
-        
         .slide-container {
             position: relative;
             width: 100%;
             height: 100%;
             overflow: hidden;
         }
-        
         .slide-wrapper {
             display: flex;
             height: 100%;
             transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
-        
         .slide {
             min-width: 100%;
             height: 100%;
@@ -48,70 +45,63 @@
 </head>
 <body>
     <div id="root"></div>
-    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script type="text/babel">
         const { useState, useEffect } = React;
-        
+
         const CalendarIcon = () => (
-            React.createElement('svg', { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 },
-                React.createElement('rect', { x: 3, y: 4, width: 18, height: 18, rx: 2, ry: 2 }),
-                React.createElement('line', { x1: 16, y1: 2, x2: 16, y2: 6 }),
-                React.createElement('line', { x1: 8, y1: 2, x2: 8, y2: 6 }),
-                React.createElement('line', { x1: 3, y1: 10, x2: 21, y2: 10 })
-            )
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
         );
-        
+
         const CheckSquareIcon = () => (
-            React.createElement('svg', { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, className: "text-green-600 flex-shrink-0" },
-                React.createElement('polyline', { points: "9 11 12 14 22 4" }),
-                React.createElement('path', { d: "M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" })
-            )
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 11 12 14 22 4"></polyline>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
         );
-        
+
         const SquareIcon = () => (
-            React.createElement('svg', { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, className: "text-gray-600 flex-shrink-0" },
-                React.createElement('rect', { x: 3, y: 3, width: 18, height: 18, rx: 2, ry: 2 })
-            )
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            </svg>
         );
-        
+
         const PlusIcon = () => (
-            React.createElement('svg', { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 },
-                React.createElement('line', { x1: 12, y1: 5, x2: 12, y2: 19 }),
-                React.createElement('line', { x1: 5, y1: 12, x2: 19, y2: 12 })
-            )
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
         );
-        
+
         const XIcon = () => (
-            React.createElement('svg', { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 },
-                React.createElement('line', { x1: 18, y1: 6, x2: 6, y2: 18 }),
-                React.createElement('line', { x1: 6, y1: 6, x2: 18, y2: 18 })
-            )
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
         );
 
         const ChevronLeftIcon = () => (
-            React.createElement('svg', { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 },
-                React.createElement('polyline', { points: "15 18 9 12 15 6" })
-            )
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
         );
 
         const ChevronRightIcon = () => (
-            React.createElement('svg', { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 },
-                React.createElement('polyline', { points: "9 18 15 12 9 6" })
-            )
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
         );
 
         const BellIcon = () => (
-            React.createElement('svg', { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 },
-                React.createElement('path', { d: "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" }),
-                React.createElement('path', { d: "M13.73 21a2 2 0 0 1-3.46 0" })
-            )
-        );
-
-        const SettingsIcon = () => (
-            React.createElement('svg', { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 },
-                React.createElement('circle', { cx: 12, cy: 12, r: 3 }),
-                React.createElement('path', { d: "M12 1v6m0 6v6m8.66-10l-5.2 3m-2.92 1.68l-5.2 3M22.66 17l-5.2-3m-2.92-1.68l-5.2-3M1.34 7l5.2 3m2.92 1.68l5.2 3M1.34 17l5.2-3m2.92-1.68l5.2-3" })
-            )
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
         );
 
         const DisciplineApp = () => {
@@ -123,14 +113,12 @@
             const [calendarView, setCalendarView] = useState(false);
             const [currentMonthOffset, setCurrentMonthOffset] = useState(0);
             const [showNotifications, setShowNotifications] = useState(false);
-            
+
             const loadTasks = () => {
                 try {
                     const saved = localStorage.getItem('disciplineTasks');
                     if (saved) return JSON.parse(saved);
-                } catch (e) {
-                    console.error('Error loading tasks:', e);
-                }
+                } catch (e) {}
                 return {
                     daily: [
                         { id: 1, text: 'Make bed', completed: false },
@@ -162,9 +150,7 @@
                 try {
                     const saved = localStorage.getItem('dailyHistory');
                     if (saved) return JSON.parse(saved);
-                } catch (e) {
-                    console.error('Error loading history:', e);
-                }
+                } catch (e) {}
                 return {};
             };
 
@@ -173,19 +159,11 @@
             const [streakDays] = useState(7);
 
             useEffect(() => {
-                try {
-                    localStorage.setItem('disciplineTasks', JSON.stringify(tasks));
-                } catch (e) {
-                    console.error('Error saving tasks:', e);
-                }
+                localStorage.setItem('disciplineTasks', JSON.stringify(tasks));
             }, [tasks]);
 
             useEffect(() => {
-                try {
-                    localStorage.setItem('dailyHistory', JSON.stringify(dailyHistory));
-                } catch (e) {
-                    console.error('Error saving history:', e);
-                }
+                localStorage.setItem('dailyHistory', JSON.stringify(dailyHistory));
             }, [dailyHistory]);
 
             const phrases = {
@@ -195,31 +173,6 @@
                     "You're capable of more than this.",
                     "Not acceptable. Get to work.",
                     "This is drift, not discipline.",
-                    "Your future self deserves better.",
-                    "Stop making excuses. Start doing.",
-                    "You know what needs to happen.",
-                    "Mediocrity is a choice. Choose better.",
-                    "The day isn't over. Fix this.",
-                    "This isn't who you want to be.",
-                    "Discipline isn't negotiable.",
-                    "You've done better before. Do it again.",
-                    "No one else will do this for you.",
-                    "Average is not your standard.",
-                    "You're leaving progress on the table.",
-                    "This is the easy path. Choose the hard one.",
-                    "Comfort is killing your potential.",
-                    "You already know what to do.",
-                    "Stop waiting. Start executing.",
-                    "This isn't effort. This is coasting.",
-                    "Your goals require more than this.",
-                    "Discipline separates you from everyone else.",
-                    "You can turn this around right now.",
-                    "The difference is in the execution.",
-                    "Stop thinking. Start doing.",
-                    "This is where growth happens. Push through.",
-                    "You didn't come this far to stay here.",
-                    "Winners show up on hard days too.",
-                    "The scoreboard doesn't lie.",
                 ],
                 bareMinimum: [
                     "Bare minimum met. You can do better.",
@@ -227,31 +180,6 @@
                     "You passed. Now aim higher.",
                     "Average completed. Push for excellence.",
                     "Meeting the standard isn't beating it.",
-                    "Good enough isn't good enough.",
-                    "You cleared the bar. Now raise it.",
-                    "Solid baseline. Now exceed it.",
-                    "This is the floor, not the ceiling.",
-                    "Passing is not the goal. Excellence is.",
-                    "You're in the middle. Don't stay there.",
-                    "Mediocre effort yields mediocre results.",
-                    "This works. But you're capable of more.",
-                    "You did the minimum. Do the maximum.",
-                    "Progress made. More progress available.",
-                    "You're on track. Now get ahead.",
-                    "Standard met. Now set a new one.",
-                    "This is fine. Fine isn't great.",
-                    "You showed up. Now show out.",
-                    "Halfway there isn't the destination.",
-                    "Consistent beats perfect. But push harder.",
-                    "You're doing it. Now dominate it.",
-                    "Good start. Better finish needed.",
-                    "This is progress. Don't settle here.",
-                    "You're moving forward. Accelerate.",
-                    "Meeting expectations. Exceed them.",
-                    "Adequate is not ambitious.",
-                    "This is survival. Aim for thriving.",
-                    "You're coasting. Time to climb.",
-                    "Minimum viable. Now make it exceptional.",
                 ],
                 strong: [
                     "Solid work. Keep going.",
@@ -259,31 +187,6 @@
                     "You're executing. Stay consistent.",
                     "This is what discipline looks like.",
                     "Above standard. Maintain this.",
-                    "You're putting in the work. It shows.",
-                    "Impressive. Don't get comfortable.",
-                    "You're building momentum. Use it.",
-                    "This is the standard. Keep it there.",
-                    "Quality execution. Now finish strong.",
-                    "You showed up and delivered.",
-                    "This is what winning looks like.",
-                    "You're ahead of most. Stay there.",
-                    "Strong discipline on display.",
-                    "You're doing what others won't.",
-                    "This is how you build excellence.",
-                    "Consistent execution. Keep this energy.",
-                    "You're separating yourself. Don't stop.",
-                    "This is your standard now. Own it.",
-                    "You made it happen. Again tomorrow.",
-                    "High performance. This is the way.",
-                    "You're in control. Stay locked in.",
-                    "This is focus in action.",
-                    "You delivered today. Repeat it.",
-                    "Exceptional effort. Maintain the pace.",
-                    "You're proving yourself right.",
-                    "This is discipline, not luck.",
-                    "You earned this. Keep earning it.",
-                    "You're setting the standard.",
-                    "Strong finish. Build on it tomorrow.",
                 ],
                 perfect: [
                     "100%. Excellence achieved.",
@@ -291,16 +194,6 @@
                     "Perfect. Now do it again tomorrow.",
                     "Complete domination. This is your baseline.",
                     "You owned today. Make it a habit.",
-                    "Every single task. That's discipline.",
-                    "100%. This is who you are now.",
-                    "Perfect score. Repeat it.",
-                    "Zero excuses. Zero failures. All execution.",
-                    "You did everything. That's the standard.",
-                    "Complete. Now raise the bar tomorrow.",
-                    "Full discipline. Don't lose this edge.",
-                    "You swept the board. Again.",
-                    "This is what winning every day looks like.",
-                    "Perfect execution. Make it your norm.",
                 ],
             };
 
@@ -310,9 +203,7 @@
                 else if (percentage >= 75) phraseArray = phrases.strong;
                 else if (percentage >= 50) phraseArray = phrases.bareMinimum;
                 else phraseArray = phrases.failing;
-                
-                const index = percentage % phraseArray.length;
-                return phraseArray[index];
+                return phraseArray[percentage % phraseArray.length];
             };
 
             const calculatePercentage = (taskList) => {
@@ -326,52 +217,39 @@
                 const targetMonth = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
                 const year = targetMonth.getFullYear();
                 const month = targetMonth.getMonth();
-                
+
                 const firstDay = new Date(year, month, 1);
                 const lastDay = new Date(year, month + 1, 0);
                 const daysInMonth = lastDay.getDate();
                 const startingDayOfWeek = firstDay.getDay();
-                
+
                 const monthName = targetMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-                
+
                 const days = [];
-                
-                // Empty cells for days before month starts
+
                 for (let i = 0; i < startingDayOfWeek; i++) {
                     days.push(null);
                 }
-                
-                // Days of the month
+
                 const todayKey = today.toISOString().split('T')[0];
                 for (let day = 1; day <= daysInMonth; day++) {
                     const date = new Date(year, month, day);
                     const dateKey = date.toISOString().split('T')[0];
-                    
+
                     let percentage = 0;
                     let color = 'grey';
-                    
+
                     if (dateKey === todayKey) {
-                        // Today is always grey
                         percentage = calculatePercentage(tasks.daily);
                         color = 'grey';
                     } else if (date < today && dailyHistory[dateKey] !== undefined) {
-                        // Past completed days show their color
                         percentage = dailyHistory[dateKey];
                         color = percentage >= 75 ? 'green' : percentage >= 50 ? 'yellow' : 'red';
-                    } else {
-                        // All other days are grey (future or incomplete past)
-                        percentage = 0;
-                        color = 'grey';
                     }
-                    
-                    days.push({
-                        day,
-                        date: dateKey,
-                        percentage,
-                        color
-                    });
+
+                    days.push({ day, date: dateKey, percentage, color });
                 }
-                
+
                 return { days, monthName };
             };
 
@@ -381,10 +259,6 @@
                 if (percentage >= 75) return '#10b981';
                 if (percentage >= 50) return '#f59e0b';
                 return '#ef4444';
-            };
-
-            const handleTabChange = (index) => {
-                setActiveTabIndex(index);
             };
 
             const toggleTask = (timeframe, taskId) => {
@@ -398,14 +272,9 @@
 
             const addTask = () => {
                 if (!newTaskText.trim()) return;
-                const newTask = {
-                    id: Date.now(),
-                    text: newTaskText,
-                    completed: false
-                };
                 setTasks(prev => ({
                     ...prev,
-                    [selectedTimeframe]: [...prev[selectedTimeframe], newTask]
+                    [selectedTimeframe]: [...prev[selectedTimeframe], { id: Date.now(), text: newTaskText, completed: false }]
                 }));
                 setNewTaskText('');
                 setShowAddTask(false);
@@ -425,182 +294,166 @@
             const message = getMessage(percentage);
 
             if (calendarView) {
-                return React.createElement('div', { className: 'h-screen bg-black flex flex-col' },
-                    React.createElement('div', { className: 'bg-zinc-900 border-b border-zinc-800 px-6 py-4' },
-                        React.createElement('div', { className: 'flex items-center justify-between' },
-                            React.createElement('button', { 
-                                onClick: () => setCalendarView(false), 
-                                className: 'text-gray-400' 
-                            }, '← Back'),
-                            React.createElement('h1', { className: 'text-lg font-semibold text-white' }, 'History'),
-                            React.createElement('div', { className: 'w-16' })
-                        )
-                    ),
-                    React.createElement('div', { className: 'bg-zinc-900 border-b border-zinc-800 px-6 py-4' },
-                        React.createElement('div', { className: 'flex items-center justify-between' },
-                            React.createElement('div', null,
-                                React.createElement('div', { className: 'text-sm text-gray-500' }, 'Green Day Streak'),
-                                React.createElement('div', { className: 'text-2xl font-bold text-white' }, streakDays + ' days')
-                            ),
-                            React.createElement('div', { className: 'text-4xl' }, '🔥')
-                        )
-                    ),
-                    React.createElement('div', { className: 'bg-zinc-900 border-b border-zinc-800 px-6 py-3' },
-                        React.createElement('div', { className: 'flex items-center justify-center gap-4' },
-                            React.createElement('button', {
-                                onClick: () => setCurrentMonthOffset(currentMonthOffset - 1),
-                                className: 'text-gray-400 hover:text-white'
-                            }, React.createElement(ChevronLeftIcon)),
-                            React.createElement('div', { className: 'text-white font-semibold text-lg' }, monthData.monthName),
-                            React.createElement('button', {
-                                onClick: () => setCurrentMonthOffset(currentMonthOffset + 1),
-                                className: 'text-gray-400 hover:text-white',
-                                disabled: currentMonthOffset >= 0
-                            }, React.createElement(ChevronRightIcon))
-                        )
-                    ),
-                    React.createElement('div', { className: 'flex-1 overflow-auto p-6' },
-                        React.createElement('div', { className: 'grid grid-cols-7 gap-2' },
-                            ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day =>
-                                React.createElement('div', { 
-                                    key: day, 
-                                    className: 'text-center text-xs font-semibold text-gray-500 pb-2' 
-                                }, day)
-                            ),
-                            monthData.days.map((day, idx) =>
-                                day ? React.createElement('div', {
-                                    key: idx,
-                                    className: 'aspect-square rounded-lg flex flex-col items-center justify-center',
-                                    style: {
-                                        backgroundColor: day.color === 'grey' ? '#52525b' :
-                                                       day.color === 'green' ? '#10b981' : 
-                                                       day.color === 'yellow' ? '#f59e0b' : '#ef4444'
-                                    }
-                                },
-                                    React.createElement('div', { className: 'text-white text-sm font-semibold' }, day.day),
-                                    day.color !== 'grey' && React.createElement('div', { className: 'text-white text-xs' }, day.percentage + '%')
-                                ) : React.createElement('div', { key: idx })
-                            )
-                        )
-                    )
+                return (
+                    <div className="h-screen bg-black flex flex-col">
+                        <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
+                            <div className="flex items-center justify-between">
+                                <button onClick={() => setCalendarView(false)} className="text-gray-400">← Back</button>
+                                <h1 className="text-lg font-semibold text-white">History</h1>
+                                <div className="w-16"></div>
+                            </div>
+                        </div>
+                        <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <div className="text-sm text-gray-500">Green Day Streak</div>
+                                    <div className="text-2xl font-bold text-white">{streakDays} days</div>
+                                </div>
+                                <div className="text-4xl">🔥</div>
+                            </div>
+                        </div>
+                        <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-3">
+                            <div className="flex items-center justify-center gap-4">
+                                <button onClick={() => setCurrentMonthOffset(currentMonthOffset - 1)} className="text-gray-400 hover:text-white">
+                                    <ChevronLeftIcon />
+                                </button>
+                                <div className="text-white font-semibold text-lg">{monthData.monthName}</div>
+                                <button onClick={() => setCurrentMonthOffset(currentMonthOffset + 1)} className="text-gray-400 hover:text-white" disabled={currentMonthOffset >= 0}>
+                                    <ChevronRightIcon />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-auto p-6">
+                            <div className="grid grid-cols-7 gap-2">
+                                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+                                    <div key={day} className="text-center text-xs font-semibold text-gray-500 pb-2">{day}</div>
+                                ))}
+                                {monthData.days.map((day, idx) =>
+                                    day ? (
+                                        <div key={idx} className="aspect-square rounded-lg flex flex-col items-center justify-center"
+                                            style={{
+                                                backgroundColor: day.color === 'grey' ? '#52525b' :
+                                                    day.color === 'green' ? '#10b981' :
+                                                        day.color === 'yellow' ? '#f59e0b' : '#ef4444'
+                                            }}>
+                                            <div className="text-white text-sm font-semibold">{day.day}</div>
+                                            {day.color !== 'grey' && <div className="text-white text-xs">{day.percentage}%</div>}
+                                        </div>
+                                    ) : <div key={idx}></div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 );
             }
 
             if (showNotifications) {
-                return React.createElement('div', { className: 'h-screen bg-black flex flex-col' },
-                    React.createElement('div', { className: 'bg-zinc-900 border-b border-zinc-800 px-6 py-4' },
-                        React.createElement('div', { className: 'flex items-center justify-between' },
-                            React.createElement('button', { 
-                                onClick: () => setShowNotifications(false), 
-                                className: 'text-gray-400' 
-                            }, '← Back'),
-                            React.createElement('h1', { className: 'text-lg font-semibold text-white' }, 'Notifications'),
-                            React.createElement('div', { className: 'w-16' })
-                        )
-                    ),
-                    React.createElement('div', { className: 'flex-1 flex items-center justify-center' },
-                        React.createElement('div', { className: 'text-gray-500 text-center' }, 'Coming soon...')
-                    )
+                return (
+                    <div className="h-screen bg-black flex flex-col">
+                        <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
+                            <div className="flex items-center justify-between">
+                                <button onClick={() => setShowNotifications(false)} className="text-gray-400">← Back</button>
+                                <h1 className="text-lg font-semibold text-white">Notifications</h1>
+                                <div className="w-16"></div>
+                            </div>
+                        </div>
+                        <div className="flex-1 flex items-center justify-center">
+                            <div className="text-gray-500 text-center">Coming soon...</div>
+                        </div>
+                    </div>
                 );
             }
 
             if (showAddTask) {
-                return React.createElement('div', { className: 'h-screen bg-black flex flex-col' },
-                    React.createElement('div', { className: 'bg-zinc-900 border-b border-zinc-800 px-6 py-4' },
-                        React.createElement('div', { className: 'flex items-center justify-between' },
-                            React.createElement('button', { 
-                                onClick: () => setShowAddTask(false), 
-                                className: 'text-gray-400' 
-                            }, 'Cancel'),
-                            React.createElement('h1', { className: 'text-lg font-semibold text-white' }, 'Add Task'),
-                            React.createElement('button', { 
-                                onClick: addTask, 
-                                className: 'text-green-500 font-semibold' 
-                            }, 'Done')
-                        )
-                    ),
-                    React.createElement('div', { className: 'p-6' },
-                        React.createElement('div', { className: 'mb-4' },
-                            React.createElement('label', { className: 'block text-sm font-medium text-gray-400 mb-2' }, 'Timeframe'),
-                            React.createElement('select', {
-                                value: selectedTimeframe,
-                                onChange: (e) => setSelectedTimeframe(e.target.value),
-                                className: 'w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white'
-                            },
-                                React.createElement('option', { value: 'daily' }, 'Daily'),
-                                React.createElement('option', { value: 'weekly' }, 'Weekly'),
-                                React.createElement('option', { value: 'monthly' }, 'Monthly'),
-                                React.createElement('option', { value: 'yearly' }, 'Yearly')
-                            )
-                        ),
-                        React.createElement('div', null,
-                            React.createElement('label', { className: 'block text-sm font-medium text-gray-400 mb-2' }, 'Task'),
-                            React.createElement('input', {
-                                type: 'text',
-                                value: newTaskText,
-                                onChange: (e) => setNewTaskText(e.target.value),
-                                placeholder: 'e.g., Workout, Read 20 pages',
-                                className: 'w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600',
-                                autoFocus: true
-                            })
-                        )
-                    )
+                return (
+                    <div className="h-screen bg-black flex flex-col">
+                        <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
+                            <div className="flex items-center justify-between">
+                                <button onClick={() => setShowAddTask(false)} className="text-gray-400">Cancel</button>
+                                <h1 className="text-lg font-semibold text-white">Add Task</h1>
+                                <button onClick={addTask} className="text-green-500 font-semibold">Done</button>
+                            </div>
+                        </div>
+                        <div className="p-6">
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Timeframe</label>
+                                <select value={selectedTimeframe} onChange={(e) => setSelectedTimeframe(e.target.value)}
+                                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white">
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Task</label>
+                                <input type="text" value={newTaskText} onChange={(e) => setNewTaskText(e.target.value)}
+                                    placeholder="e.g., Workout, Read 20 pages"
+                                    className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600" autoFocus />
+                            </div>
+                        </div>
+                    </div>
                 );
             }
 
-            return React.createElement('div', { className: 'h-screen bg-black flex flex-col' },
-                React.createElement('div', { className: 'bg-zinc-900 border-b border-zinc-800 px-6 py-4' },
-                    React.createElement('div', { className: 'flex items-center justify-between' },
-                        React.createElement('h1', { className: 'text-2xl font-bold text-white' }, 'Baseline'),
-                        React.createElement('div', { className: 'flex gap-3' },
-                            React.createElement('button', { onClick: () => setShowNotifications(true), className: 'text-gray-400' },
-                                React.createElement(BellIcon)
-                            ),
-                            React.createElement('button', { onClick: () => setCalendarView(true), className: 'text-gray-400' },
-                                React.createElement(CalendarIcon)
-                            )
-                        )
-                    )
-                ),
-                React.createElement('div', { className: 'bg-zinc-900 border-b border-zinc-800 px-6 py-6' },
-                    React.createElement('div', { className: 'text-center' },
-                        React.createElement('div', { 
-                            className: 'text-6xl font-bold mb-2', 
-                            style: { color: color } 
-                        }, percentage + '%'),
-                        React.createElement('div', { className: 'text-sm text-gray-500' },
-                            currentTasks.filter(t => t.completed).length + '/' + currentTasks.length + ' tasks'
-                        ),
-                        React.createElement('div', { className: 'text-sm text-gray-400 mt-2' }, message)
-                    )
-                ),
-                React.createElement('div', { className: 'bg-zinc-900 border-b border-zinc-800 px-6 py-2' },
-                    React.createElement('div', { className: 'flex gap-4' },
-                        tabs.map((tab, index) =>
-                            React.createElement('button', {
-                                key: tab,
-                                onClick: () => handleTabChange(index),
-                                className: 'px-4 py-2 text-sm font-medium capitalize ' + (
-                                    activeTabIndex === index
-                                        ? 'text-white border-b-2 border-white'
-                                        : 'text-gray-500'
-                                )
-                            }, tab)
-                        )
-                    )
-                ),
-                React.createElement('div', { className: 'slide-container flex-1' },
-                    React.createElement('div', { 
-                        className: 'slide-wrapper',
-                        style: { transform: `translateX(-${activeTabIndex * 100}%)` }
-                    },
-                        tabs.map((tab, index) =>
-                            React.createElement('div', { key: tab, className: 'slide' },
-                                React.createElement('div', { className: 'p-6 space-y-3 h-full overflow-auto' },
-                                    tasks[tab].map(task =>
-                                        React.createElement('div', {
-                                            key: task.id,
-                                            className: 'bg-zinc-900 rounded-lg p-4 flex items-center justify-between border border-zinc-800'
-                                        },
-                                            React.createElement('button', {
-                                                onClick
+            return (
+                <div className="h-screen bg-black flex flex-col">
+                    <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
+                        <div className="flex items-center justify-between">
+                            <h1 className="text-2xl font-bold text-white">Baseline</h1>
+                            <div className="flex gap-3">
+                                <button onClick={() => setShowNotifications(true)} className="text-gray-400"><BellIcon /></button>
+                                <button onClick={() => setCalendarView(true)} className="text-gray-400"><CalendarIcon /></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-6">
+                        <div className="text-center">
+                            <div className="text-6xl font-bold mb-2" style={{ color }}>{percentage}%</div>
+                            <div className="text-sm text-gray-500">{currentTasks.filter(t => t.completed).length}/{currentTasks.length} tasks</div>
+                            <div className="text-sm text-gray-400 mt-2">{message}</div>
+                        </div>
+                    </div>
+                    <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-2">
+                        <div className="flex gap-4">
+                            {tabs.map((tab, index) => (
+                                <button key={tab} onClick={() => setActiveTabIndex(index)}
+                                    className={`px-4 py-2 text-sm font-medium capitalize ${activeTabIndex === index ? 'text-white border-b-2 border-white' : 'text-gray-500'}`}>
+                                    {tab}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="slide-container flex-1">
+                        <div className="slide-wrapper" style={{ transform: `translateX(-${activeTabIndex * 100}%)` }}>
+                            {tabs.map((tab) => (
+                                <div key={tab} className="slide">
+                                    <div className="p-6 space-y-3 h-full overflow-auto">
+                                        {tasks[tab].map(task => (
+                                            <div key={task.id} className="bg-zinc-900 rounded-lg p-4 flex items-center justify-between border border-zinc-800">
+                                                <button onClick={() => toggleTask(tab, task.id)} className="flex items-center gap-3 flex-1">
+                                                    {task.completed ? <CheckSquareIcon /> : <SquareIcon />}
+                                                    <span className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
+                                                </button>
+                                                <button onClick={() => deleteTask(tab, task.id)} className="ml-2 text-gray-600 hover:text-red-500"><XIcon /></button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="p-6 bg-zinc-900 border-t border-zinc-800">
+                        <button onClick={() => setShowAddTask(true)}
+                            className="w-full bg-white text-black py-4 rounded-lg font-semibold flex items-center justify-center gap-2">
+                            <PlusIcon />Add Task
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<DisciplineApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
