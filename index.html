@@ -305,7 +305,29 @@
             };
 
             const handleTabChange = (newIndex) => {
-                setSlideDirection(newIndex > activeTabIndex ? 'left' : 'right');
+                if (newIndex === activeTabIndex) return;
+                
+                // Create illusion that clicked tab is always next door
+                const wrapper = slideWrapperRef.current;
+                if (!wrapper) return;
+                
+                // Disable transition temporarily
+                wrapper.style.transition = 'none';
+                
+                // Position the target tab next to current
+                const direction = newIndex > activeTabIndex ? 1 : -1;
+                const offset = direction * 100;
+                
+                // Move wrapper to show target tab at the edge
+                wrapper.style.transform = `translateX(calc(-${activeTabIndex * 100}% + ${offset}px))`;
+                
+                // Force reflow
+                wrapper.offsetHeight;
+                
+                // Re-enable transition
+                wrapper.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                
+                // Slide to target
                 setActiveTabIndex(newIndex);
             };
 
@@ -324,6 +346,12 @@
                 const deltaY = touchY - touchStartY.current;
 
                 if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+                    // Prevent swiping beyond boundaries
+                    if ((activeTabIndex === 0 && deltaX > 0) || 
+                        (activeTabIndex === tabs.length - 1 && deltaX < 0)) {
+                        return;
+                    }
+                    
                     isDragging.current = true;
                     const currentOffset = -activeTabIndex * 100;
                     const dragPercent = (deltaX / window.innerWidth) * 100;
@@ -530,7 +558,7 @@
                         <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
                             <div className="flex items-center justify-between">
                                 <button onClick={() => setShowAddTask(false)} className="text-gray-400">Cancel</button>
-                                <h1 className="text-lg font-semibold text-white">Add Task</h1>
+                                <h1 className="text-lg font-semibold text-white">Add Goal</h1>
                                 <button onClick={addTask} className="text-green-500 font-semibold">Done</button>
                             </div>
                         </div>
@@ -546,7 +574,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Task</label>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Goal</label>
                                 <input type="text" value={newTaskText} onChange={(e) => setNewTaskText(e.target.value)}
                                     placeholder="e.g., Workout, Read 20 pages"
                                     className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600" autoFocus />
@@ -572,7 +600,7 @@
                     <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-6">
                         <div className="text-center">
                             <div className="text-6xl font-bold mb-2" style={{ color }}>{percentage}%</div>
-                            <div className="text-sm text-gray-500">{currentTasks.filter(t => t.completed).length}/{currentTasks.length} tasks</div>
+                            <div className="text-sm text-gray-500">{currentTasks.filter(t => t.completed).length}/{currentTasks.length} goals</div>
                             <div className="text-sm text-gray-400 mt-2">{message}</div>
                         </div>
                     </div>
@@ -611,7 +639,7 @@
                     <div className="p-6 bg-zinc-900 border-t border-zinc-800">
                         <button onClick={() => setShowAddTask(true)}
                             className="w-full bg-white text-black py-4 rounded-lg font-semibold flex items-center justify-center gap-2">
-                            <PlusIcon />Add Task
+                            <PlusIcon />Add Goal
                         </button>
                     </div>
                 </div>
