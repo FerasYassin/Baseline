@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#000000">
     <title>Baseline</title>
     <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react.dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { 
@@ -139,7 +139,6 @@
         const DisciplineApp = () => {
             const tabs = ['daily', 'weekly', 'monthly', 'yearly'];
             const [activeTabIndex, setActiveTabIndex] = useState(0);
-            const [slideDirection, setSlideDirection] = useState('right');
             const [showAddTask, setShowAddTask] = useState(false);
             const [newTaskText, setNewTaskText] = useState('');
             const [selectedTimeframe, setSelectedTimeframe] = useState('daily');
@@ -605,25 +604,4 @@
                                                     {task.completed ? <CheckSquareIcon /> : <SquareIcon />}
                                                     <span className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
                                                 </button>
-                                                <button onClick={() => deleteTask(tab, task.id)} className="ml-2 text-gray-600 hover:text-red-500"><XIcon /></button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="p-6 bg-zinc-900 border-t border-zinc-800">
-                        <button onClick={() => setShowAddTask(true)}
-                            className="w-full bg-white text-black py-4 rounded-lg font-semibold flex items-center justify-center gap-2">
-                            <PlusIcon />Add Goal
-                        </button>
-                    </div>
-                </div>
-            );
-        };
-
-        ReactDOM.render(<DisciplineApp />, document.getElementById('root'));
-    </script>
-</body>
-</html>
+                                                <button onClick={() => deleteTask(tab, task.id)} className="ml-
