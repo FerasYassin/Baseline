@@ -8,7 +8,7 @@
     <meta name="theme-color" content="#000000">
     <title>Baseline</title>
     <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react.dom.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { 
@@ -322,7 +322,6 @@
                 const deltaY = touchY - touchStartY.current;
 
                 if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-                    // Prevent swiping beyond boundaries
                     if ((activeTabIndex === 0 && deltaX > 0) || 
                         (activeTabIndex === tabs.length - 1 && deltaX < 0)) {
                         return;
@@ -604,4 +603,4 @@
                                                     {task.completed ? <CheckSquareIcon /> : <SquareIcon />}
                                                     <span className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
                                                 </button>
-                                                <button onClick={() => deleteTask(tab, task.id)} className="ml-
+                                                <button onClick={() => deleteTask(tab, task.id)} className="ml-2 text-gray-600 hover:text-red-500"><XIcon /></button>
