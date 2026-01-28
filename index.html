@@ -6,6 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
+    <meta name="format-detection" content="telephone=no">
     <title>Baseline</title>
     <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -16,6 +17,7 @@
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
+            touch-action: manipulation;
         }
         body { 
             margin: 0; 
@@ -25,20 +27,30 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             -webkit-user-select: none;
             user-select: none;
+            touch-action: manipulation;
         }
         #root { 
             height: 100vh; 
             overflow: hidden;
+            touch-action: manipulation;
         }
         input, textarea, select {
             -webkit-user-select: text;
             user-select: text;
+            touch-action: auto;
         }
         button {
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
+            touch-action: manipulation;
+            cursor: pointer;
+        }
+        div, span, svg {
+            -webkit-user-select: none;
+            user-select: none;
+            pointer-events: auto;
         }
         .day-panel {
             position: fixed;
@@ -283,6 +295,26 @@
             const [tasks, setTasks] = useState(loadTasks());
             const [dailyHistory, setDailyHistory] = useState(loadDailyHistory());
             const [greenStreak, setGreenStreak] = useState(() => calculateGreenStreak(loadDailyHistory()));
+
+            // Prevent iOS keyboard from appearing on non-input touches
+            useEffect(() => {
+                const handleTouchStart = (e) => {
+                    const target = e.target;
+                    // Only allow keyboard for actual input elements
+                    if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'SELECT') {
+                        // Blur any focused element
+                        if (document.activeElement && document.activeElement.blur) {
+                            document.activeElement.blur();
+                        }
+                    }
+                };
+
+                document.addEventListener('touchstart', handleTouchStart, { passive: true });
+                
+                return () => {
+                    document.removeEventListener('touchstart', handleTouchStart);
+                };
+            }, []);
 
             useEffect(() => {
                 localStorage.setItem('disciplineTasks', JSON.stringify(tasks));
@@ -653,7 +685,7 @@
                             </div>
                         </div>
                         <div className="fab-container">
-                            <button onClick={addTask}
+                            <button type="button" onClick={addTask}
                                 disabled={!newTaskText.trim()}
                                 className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:opacity-50 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2">
                                 <CheckIcon />
@@ -669,7 +701,7 @@
                     <div className="h-screen bg-black flex flex-col">
                         <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
                             <div className="flex items-center justify-between">
-                                <button onClick={() => setShowNotifications(false)} className="text-gray-400">← Back</button>
+                                <button type="button" onClick={() => setShowNotifications(false)} className="text-gray-400">← Back</button>
                                 <h1 className="text-lg font-semibold text-white">Notifications</h1>
                                 <div className="w-16"></div>
                             </div>
@@ -689,8 +721,8 @@
                             <div className="flex items-center justify-between">
                                 <h1 className="text-2xl font-bold text-white">Baseline.</h1>
                                 <div className="flex gap-4">
-                                    <button onClick={() => setShowNotifications(true)} className="text-gray-400"><BellIcon /></button>
-                                    <button onClick={() => setCalendarView(true)} className="text-gray-400"><CalendarIcon /></button>
+                                    <button type="button" onClick={() => setShowNotifications(true)} className="text-gray-400"><BellIcon /></button>
+                                    <button type="button" onClick={() => setCalendarView(true)} className="text-gray-400"><CalendarIcon /></button>
                                 </div>
                             </div>
                         </div>
@@ -704,7 +736,7 @@
                         <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-2">
                             <div className="flex gap-4">
                                 {tabs.map((tab, index) => (
-                                    <button key={tab} onClick={() => handleTabChange(index)}
+                                    <button type="button" key={tab} onClick={() => handleTabChange(index)}
                                         className={`px-4 py-2 text-sm font-medium capitalize ${activeTabIndex === index ? 'text-white border-b-2 border-white' : 'text-gray-500'}`}>
                                         {tab}
                                     </button>
@@ -721,11 +753,11 @@
                                         <div className="p-6 space-y-3 h-full overflow-auto pb-32">
                                             {tasks[tab].map(task => (
                                                 <div key={task.id} className="bg-zinc-900 rounded-lg p-4 flex items-center justify-between border border-zinc-800">
-                                                    <button onClick={() => toggleTask(tab, task.id)} className="flex items-center gap-3 flex-1">
+                                                    <button type="button" onClick={() => toggleTask(tab, task.id)} className="flex items-center gap-3 flex-1">
                                                         {task.completed ? <CheckSquareIcon /> : <SquareIcon />}
                                                         <span className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
                                                     </button>
-                                                    <button onClick={() => deleteTask(tab, task.id)} className="ml-2 text-gray-600 hover:text-red-500"><XIcon /></button>
+                                                    <button type="button" onClick={() => deleteTask(tab, task.id)} className="ml-2 text-gray-600 hover:text-red-500"><XIcon /></button>
                                                 </div>
                                             ))}
                                         </div>
@@ -734,7 +766,7 @@
                             </div>
                         </div>
                         <div className="fab-container">
-                            <button onClick={() => setShowAddTask(true)}
+                            <button type="button" onClick={() => setShowAddTask(true)}
                                 className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2">
                                 <PlusIcon />
                                 Add Goal
