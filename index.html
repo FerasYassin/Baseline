@@ -298,21 +298,56 @@
 
             // Prevent iOS keyboard from appearing on non-input touches
             useEffect(() => {
-                const handleTouchStart = (e) => {
+                // Prevent any default touch behavior that might trigger keyboard
+                const preventKeyboard = (e) => {
                     const target = e.target;
-                    // Only allow keyboard for actual input elements
-                    if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'SELECT') {
-                        // Blur any focused element
-                        if (document.activeElement && document.activeElement.blur) {
-                            document.activeElement.blur();
+                    const tagName = target.tagName.toLowerCase();
+                    
+                    // Only allow these elements to be interactive
+                    if (tagName !== 'input' && tagName !== 'textarea' && tagName !== 'select') {
+                        // Force blur on any active element
+                        const activeEl = document.activeElement;
+                        if (activeEl && activeEl.tagName.toLowerCase() !== 'body') {
+                            activeEl.blur();
+                        }
+                        
+                        // Prevent default if it's not a button or link
+                        if (tagName !== 'button' && tagName !== 'a') {
+                            e.preventDefault();
                         }
                     }
                 };
-
-                document.addEventListener('touchstart', handleTouchStart, { passive: true });
+                
+                // Add to document with capture phase
+                document.addEventListener('touchstart', preventKeyboard, { capture: true, passive: false });
+                document.addEventListener('touchend', preventKeyboard, { capture: true, passive: false });
+                
+                // Also prevent focus events on non-input elements
+                const preventFocus = (e) => {
+                    const target = e.target;
+                    const tagName = target.tagName.toLowerCase();
+                    if (tagName !== 'input' && tagName !== 'textarea' && tagName !== 'select') {
+                        e.preventDefault();
+                        target.blur();
+                    }
+                };
+                
+                document.addEventListener('focus', preventFocus, true);
+                document.addEventListener('click', (e) => {
+                    const target = e.target;
+                    const tagName = target.tagName.toLowerCase();
+                    if (tagName !== 'input' && tagName !== 'textarea' && tagName !== 'select' && tagName !== 'button' && tagName !== 'a') {
+                        const activeEl = document.activeElement;
+                        if (activeEl && activeEl.tagName.toLowerCase() !== 'body') {
+                            activeEl.blur();
+                        }
+                    }
+                }, true);
                 
                 return () => {
-                    document.removeEventListener('touchstart', handleTouchStart);
+                    document.removeEventListener('touchstart', preventKeyboard, { capture: true });
+                    document.removeEventListener('touchend', preventKeyboard, { capture: true });
+                    document.removeEventListener('focus', preventFocus, true);
                 };
             }, []);
 
@@ -677,7 +712,11 @@
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-400 mb-2">Goal</label>
-                                <input type="text" value={newTaskText} onChange={(e) => setNewTaskText(e.target.value)}
+                                <input type="text" 
+                                    value={newTaskText} 
+                                    onChange={(e) => setNewTaskText(e.target.value)}
+                                    onFocus={(e) => e.target.removeAttribute('readonly')}
+                                    onBlur={(e) => e.target.setAttribute('readonly', 'readonly')}
                                     placeholder="e.g., Workout, Read 20 pages"
                                     className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600" 
                                     autoFocus 
@@ -755,7 +794,7 @@
                                                 <div key={task.id} className="bg-zinc-900 rounded-lg p-4 flex items-center justify-between border border-zinc-800">
                                                     <button type="button" onClick={() => toggleTask(tab, task.id)} className="flex items-center gap-3 flex-1">
                                                         {task.completed ? <CheckSquareIcon /> : <SquareIcon />}
-                                                        <span className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
+                                                        <span tabIndex="-1" className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
                                                     </button>
                                                     <button type="button" onClick={() => deleteTask(tab, task.id)} className="ml-2 text-gray-600 hover:text-red-500"><XIcon /></button>
                                                 </div>
