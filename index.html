@@ -25,14 +25,10 @@
             overflow: hidden;
             background: #000;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
         }
         #root { 
             height: 100vh; 
             overflow: hidden;
-            touch-action: manipulation;
         }
         input, textarea, select {
             -webkit-user-select: text;
@@ -40,17 +36,7 @@
             touch-action: auto;
         }
         button {
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            touch-action: manipulation;
             cursor: pointer;
-        }
-        div, span, svg {
-            -webkit-user-select: none;
-            user-select: none;
-            pointer-events: auto;
         }
         .day-panel {
             position: fixed;
@@ -100,7 +86,7 @@
             flex-shrink: 0;
         }
         
-        /* Calendar slide animation */
+        /* Calendar slide animation - slides from RIGHT */
         .calendar-screen {
             position: fixed;
             top: 0;
@@ -116,7 +102,7 @@
             transform: translateX(0);
         }
         
-        /* Add goal screen animation */
+        /* Add goal screen animation - slides from BOTTOM */
         .add-goal-screen {
             position: fixed;
             top: 0;
@@ -232,7 +218,6 @@
             const isDragging = useRef(false);
             const slideWrapperRef = useRef(null);
             const monthTouchStartX = useRef(0);
-            const inputRef = useRef(null);
 
             const loadTasks = () => {
                 try {
@@ -454,7 +439,6 @@
                 const deltaY = touchY - touchStartY.current;
 
                 if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
-                    e.preventDefault();
                     if ((activeTabIndex === 0 && deltaX > 0) || 
                         (activeTabIndex === tabs.length - 1 && deltaX < 0)) {
                         return;
@@ -471,7 +455,6 @@
             const handleTaskTouchEnd = (e) => {
                 if (!isDragging.current || !slideWrapperRef.current) return;
                 
-                e.preventDefault();
                 const touchEndX = e.changedTouches[0].clientX;
                 const deltaX = touchEndX - touchStartX.current;
                 
@@ -658,9 +641,7 @@
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-400 mb-2">Goal</label>
-                                <input 
-                                    ref={inputRef}
-                                    type="text" 
+                                <input type="text" 
                                     value={newTaskText} 
                                     onChange={(e) => setNewTaskText(e.target.value)}
                                     placeholder="e.g., Workout, Read 20 pages"
@@ -739,7 +720,7 @@
                                                 <div key={task.id} className="bg-zinc-900 rounded-lg p-4 flex items-center justify-between border border-zinc-800">
                                                     <button type="button" onClick={() => toggleTask(tab, task.id)} className="flex items-center gap-3 flex-1">
                                                         {task.completed ? <CheckSquareIcon /> : <SquareIcon />}
-                                                        <span tabIndex="-1" className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
+                                                        <span className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
                                                     </button>
                                                     <button type="button" onClick={() => deleteTask(tab, task.id)} className="ml-2 text-gray-600 hover:text-red-500"><XIcon /></button>
                                                 </div>
