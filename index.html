@@ -232,6 +232,7 @@
             const isDragging = useRef(false);
             const slideWrapperRef = useRef(null);
             const monthTouchStartX = useRef(0);
+            const inputRef = useRef(null);
 
             const loadTasks = () => {
                 try {
@@ -295,61 +296,6 @@
             const [tasks, setTasks] = useState(loadTasks());
             const [dailyHistory, setDailyHistory] = useState(loadDailyHistory());
             const [greenStreak, setGreenStreak] = useState(() => calculateGreenStreak(loadDailyHistory()));
-
-            // Prevent iOS keyboard from appearing on non-input touches
-            useEffect(() => {
-                // Prevent any default touch behavior that might trigger keyboard
-                const preventKeyboard = (e) => {
-                    const target = e.target;
-                    const tagName = target.tagName.toLowerCase();
-                    
-                    // Only allow these elements to be interactive
-                    if (tagName !== 'input' && tagName !== 'textarea' && tagName !== 'select') {
-                        // Force blur on any active element
-                        const activeEl = document.activeElement;
-                        if (activeEl && activeEl.tagName.toLowerCase() !== 'body') {
-                            activeEl.blur();
-                        }
-                        
-                        // Prevent default if it's not a button or link
-                        if (tagName !== 'button' && tagName !== 'a') {
-                            e.preventDefault();
-                        }
-                    }
-                };
-                
-                // Add to document with capture phase
-                document.addEventListener('touchstart', preventKeyboard, { capture: true, passive: false });
-                document.addEventListener('touchend', preventKeyboard, { capture: true, passive: false });
-                
-                // Also prevent focus events on non-input elements
-                const preventFocus = (e) => {
-                    const target = e.target;
-                    const tagName = target.tagName.toLowerCase();
-                    if (tagName !== 'input' && tagName !== 'textarea' && tagName !== 'select') {
-                        e.preventDefault();
-                        target.blur();
-                    }
-                };
-                
-                document.addEventListener('focus', preventFocus, true);
-                document.addEventListener('click', (e) => {
-                    const target = e.target;
-                    const tagName = target.tagName.toLowerCase();
-                    if (tagName !== 'input' && tagName !== 'textarea' && tagName !== 'select' && tagName !== 'button' && tagName !== 'a') {
-                        const activeEl = document.activeElement;
-                        if (activeEl && activeEl.tagName.toLowerCase() !== 'body') {
-                            activeEl.blur();
-                        }
-                    }
-                }, true);
-                
-                return () => {
-                    document.removeEventListener('touchstart', preventKeyboard, { capture: true });
-                    document.removeEventListener('touchend', preventKeyboard, { capture: true });
-                    document.removeEventListener('focus', preventFocus, true);
-                };
-            }, []);
 
             useEffect(() => {
                 localStorage.setItem('disciplineTasks', JSON.stringify(tasks));
@@ -712,14 +658,13 @@
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-400 mb-2">Goal</label>
-                                <input type="text" 
+                                <input 
+                                    ref={inputRef}
+                                    type="text" 
                                     value={newTaskText} 
                                     onChange={(e) => setNewTaskText(e.target.value)}
-                                    onFocus={(e) => e.target.removeAttribute('readonly')}
-                                    onBlur={(e) => e.target.setAttribute('readonly', 'readonly')}
                                     placeholder="e.g., Workout, Read 20 pages"
                                     className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600" 
-                                    autoFocus 
                                     onKeyPress={(e) => e.key === 'Enter' && addTask()} />
                             </div>
                         </div>
