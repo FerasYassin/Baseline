@@ -66,7 +66,7 @@
         .slide-wrapper {
             display: flex;
             height: 100%;
-            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            /* NO TRANSITION HERE - We control it with JS */
         }
         .slide {
             min-width: 100%;
@@ -90,20 +90,39 @@
             transform: translateX(0);
         }
         
-        /* Add goal screen animation */
+        /* Add goal screen animation - HALF PAGE */
         .addgoal-overlay {
+            position: fixed;
+            top: 50%;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            border-radius: 20px 20px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 300;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+        }
+        .addgoal-overlay.show {
+            transform: translateY(0);
+        }
+        
+        .addgoal-backdrop {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: #000;
-            transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            z-index: 300;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+            z-index: 299;
         }
-        .addgoal-overlay.show {
-            transform: translateY(0);
+        .addgoal-backdrop.show {
+            opacity: 1;
+            pointer-events: auto;
         }
         
         /* Floating action button */
@@ -119,6 +138,17 @@
         }
         .fab-container button {
             pointer-events: auto;
+        }
+        
+        /* Time picker styles */
+        .time-picker {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .time-input {
+            width: 60px;
+            text-align: center;
         }
     </style>
 </head>
@@ -177,15 +207,34 @@
         );
 
         const BellIcon = () => (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+        );
+        
+        const BellOffIcon = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                <path d="M18.63 13A17.89 17.89 0 0 1 18 8"></path>
+                <path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"></path>
+                <path d="M18 8a6 6 0 0 0-9.33-5"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
             </svg>
         );
 
         const CheckIcon = () => (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        );
+        
+        const RepeatIcon = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="17 1 21 5 17 9"></polyline>
+                <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                <polyline points="7 23 3 19 7 15"></polyline>
+                <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
             </svg>
         );
 
@@ -200,6 +249,9 @@
             const [showNotifications, setShowNotifications] = useState(false);
             const [selectedDay, setSelectedDay] = useState(null);
             const [showDayPanel, setShowDayPanel] = useState(false);
+            const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+            const [notificationTimes, setNotificationTimes] = useState(['09:00', '18:00', '21:00']);
+            const [recurringEnabled, setRecurringEnabled] = useState(false);
             
             const touchStartX = useRef(0);
             const touchStartY = useRef(0);
@@ -214,27 +266,27 @@
                 } catch (e) {}
                 return {
                     daily: [
-                        { id: 1, text: 'Make bed', completed: false },
-                        { id: 2, text: 'Workout', completed: false },
-                        { id: 3, text: 'Read 20 pages', completed: false },
-                        { id: 4, text: 'No social media before noon', completed: false },
-                        { id: 5, text: 'Eat clean', completed: false },
+                        { id: 1, text: 'Make bed', completed: false, notifications: false, times: ['09:00'], recurring: true },
+                        { id: 2, text: 'Workout', completed: false, notifications: false, times: ['07:00'], recurring: true },
+                        { id: 3, text: 'Read 20 pages', completed: false, notifications: false, times: ['20:00'], recurring: true },
+                        { id: 4, text: 'No social media before noon', completed: false, notifications: false, times: ['12:00'], recurring: true },
+                        { id: 5, text: 'Eat clean', completed: false, notifications: false, times: ['08:00', '12:00', '18:00'], recurring: true },
                     ],
                     weekly: [
-                        { id: 1, text: 'Gym 4x', completed: false },
-                        { id: 2, text: 'Finish book', completed: false },
-                        { id: 3, text: 'Meal prep Sunday', completed: false },
-                        { id: 4, text: 'No alcohol', completed: false },
+                        { id: 1, text: 'Gym 4x', completed: false, notifications: false, times: ['07:00'], recurring: false },
+                        { id: 2, text: 'Finish book', completed: false, notifications: false, times: ['20:00'], recurring: false },
+                        { id: 3, text: 'Meal prep Sunday', completed: false, notifications: false, times: ['10:00'], recurring: false },
+                        { id: 4, text: 'No alcohol', completed: false, notifications: false, times: ['18:00'], recurring: false },
                     ],
                     monthly: [
-                        { id: 1, text: 'Revenue goal: $10k', completed: false },
-                        { id: 2, text: 'Read 2 books', completed: false },
-                        { id: 3, text: 'Launch product feature', completed: false },
+                        { id: 1, text: 'Revenue goal: $10k', completed: false, notifications: false, times: ['09:00'], recurring: false },
+                        { id: 2, text: 'Read 2 books', completed: false, notifications: false, times: ['20:00'], recurring: false },
+                        { id: 3, text: 'Launch product feature', completed: false, notifications: false, times: ['09:00'], recurring: false },
                     ],
                     yearly: [
-                        { id: 1, text: 'Build 6-figure business', completed: false },
-                        { id: 2, text: 'Read 24 books', completed: false },
-                        { id: 3, text: 'Get in best shape', completed: false },
+                        { id: 1, text: 'Build 6-figure business', completed: false, notifications: false, times: ['09:00'], recurring: false },
+                        { id: 2, text: 'Read 24 books', completed: false, notifications: false, times: ['20:00'], recurring: false },
+                        { id: 3, text: 'Get in best shape', completed: false, notifications: false, times: ['07:00'], recurring: false },
                     ],
                 };
             };
@@ -279,11 +331,13 @@
                 setGreenStreak(calculateGreenStreak(dailyHistory));
             }, [dailyHistory]);
 
+            // Daily reset at 12:01 AM
             useEffect(() => {
                 const now = new Date();
-                const midnight = new Date(now);
-                midnight.setHours(24, 0, 0, 0);
-                const msUntilMidnight = midnight - now;
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(0, 1, 0, 0); // 12:01 AM
+                const msUntilReset = tomorrow - now;
 
                 const timeoutId = setTimeout(() => {
                     const yesterday = new Date();
@@ -299,11 +353,15 @@
 
                     localStorage.setItem(`tasks_${yesterdayKey}`, JSON.stringify(tasks.daily));
 
+                    // Reset daily tasks - keep recurring ones, remove non-recurring
                     setTasks(prev => ({
                         ...prev,
-                        daily: prev.daily.map(task => ({ ...task, completed: false }))
+                        daily: prev.daily
+                            .filter(task => task.recurring) // Keep only recurring tasks
+                            .map(task => ({ ...task, completed: false })) // Reset completion
                     }));
 
+                    // Set up daily interval for subsequent resets
                     const intervalId = setInterval(() => {
                         const currentDate = new Date();
                         const prevDate = new Date(currentDate);
@@ -321,12 +379,14 @@
 
                         setTasks(prev => ({
                             ...prev,
-                            daily: prev.daily.map(task => ({ ...task, completed: false }))
+                            daily: prev.daily
+                                .filter(task => task.recurring)
+                                .map(task => ({ ...task, completed: false }))
                         }));
                     }, 24 * 60 * 60 * 1000);
 
                     return () => clearInterval(intervalId);
-                }, msUntilMidnight);
+                }, msUntilReset);
 
                 return () => clearTimeout(timeoutId);
             }, [tasks.daily]);
@@ -409,6 +469,12 @@
             };
 
             const handleTabChange = (newIndex) => {
+                if (!slideWrapperRef.current) return;
+                
+                // Animate DIRECTLY to the target - no intermediate slides
+                slideWrapperRef.current.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                slideWrapperRef.current.style.transform = `translateX(-${newIndex * 100}%)`;
+                
                 setActiveTabIndex(newIndex);
             };
 
@@ -447,14 +513,17 @@
                 const deltaX = touchEndX - touchStartX.current;
                 
                 slideWrapperRef.current.style.transition = 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                slideWrapperRef.current.style.transform = `translateX(-${activeTabIndex * 100}%)`;
 
                 if (Math.abs(deltaX) > 50) {
                     if (deltaX > 0 && activeTabIndex > 0) {
                         handleTabChange(activeTabIndex - 1);
                     } else if (deltaX < 0 && activeTabIndex < tabs.length - 1) {
                         handleTabChange(activeTabIndex + 1);
+                    } else {
+                        slideWrapperRef.current.style.transform = `translateX(-${activeTabIndex * 100}%)`;
                     }
+                } else {
+                    slideWrapperRef.current.style.transform = `translateX(-${activeTabIndex * 100}%)`;
                 }
 
                 isDragging.current = false;
@@ -496,11 +565,26 @@
 
             const addTask = () => {
                 if (!newTaskText.trim()) return;
+                
+                const newTask = {
+                    id: Date.now(),
+                    text: newTaskText,
+                    completed: false,
+                    notifications: notificationsEnabled,
+                    times: notificationTimes.filter(t => t !== ''),
+                    recurring: recurringEnabled
+                };
+                
                 setTasks(prev => ({
                     ...prev,
-                    [selectedTimeframe]: [...prev[selectedTimeframe], { id: Date.now(), text: newTaskText, completed: false }]
+                    [selectedTimeframe]: [...prev[selectedTimeframe], newTask]
                 }));
+                
+                // Reset form
                 setNewTaskText('');
+                setNotificationsEnabled(false);
+                setNotificationTimes(['09:00', '18:00', '21:00']);
+                setRecurringEnabled(false);
                 setShowAddTask(false);
             };
 
@@ -509,6 +593,24 @@
                     ...prev,
                     [timeframe]: prev[timeframe].filter(task => task.id !== taskId)
                 }));
+            };
+
+            const addNotificationTime = () => {
+                if (notificationTimes.length < 3) {
+                    setNotificationTimes([...notificationTimes, '12:00']);
+                }
+            };
+
+            const updateNotificationTime = (index, value) => {
+                const newTimes = [...notificationTimes];
+                newTimes[index] = value;
+                setNotificationTimes(newTimes);
+            };
+
+            const removeNotificationTime = (index) => {
+                if (notificationTimes.length > 1) {
+                    setNotificationTimes(notificationTimes.filter((_, i) => i !== index));
+                }
             };
 
             const activeTab = tabs[activeTabIndex];
@@ -568,17 +670,35 @@
                             onTouchStart={handleTaskTouchStart}
                             onTouchMove={handleTaskTouchMove}
                             onTouchEnd={handleTaskTouchEnd}>
-                            <div ref={slideWrapperRef} className="slide-wrapper" style={{ transform: `translateX(-${activeTabIndex * 100}%)` }}>
+                            <div ref={slideWrapperRef} className="slide-wrapper" style={{ transform: `translateX(-${activeTabIndex * 100}%)`, transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)' }}>
                                 {tabs.map((tab) => (
                                     <div key={tab} className="slide">
                                         <div className="p-6 space-y-3 h-full overflow-auto pb-32">
                                             {tasks[tab].map(task => (
-                                                <div key={task.id} className="bg-zinc-900 rounded-lg p-4 flex items-center justify-between border border-zinc-800">
-                                                    <button onClick={() => toggleTask(tab, task.id)} className="flex items-center gap-3 flex-1">
-                                                        {task.completed ? <CheckSquareIcon /> : <SquareIcon />}
-                                                        <span className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
-                                                    </button>
-                                                    <button onClick={() => deleteTask(tab, task.id)} className="ml-2 text-gray-600 hover:text-red-500"><XIcon /></button>
+                                                <div key={task.id} className="bg-zinc-900 rounded-lg p-4 border border-zinc-800">
+                                                    <div className="flex items-center justify-between">
+                                                        <button onClick={() => toggleTask(tab, task.id)} className="flex items-center gap-3 flex-1">
+                                                            {task.completed ? <CheckSquareIcon /> : <SquareIcon />}
+                                                            <span className={`text-left ${task.completed ? 'text-gray-600 line-through' : 'text-white'}`}>{task.text}</span>
+                                                        </button>
+                                                        <button onClick={() => deleteTask(tab, task.id)} className="ml-2 text-gray-600 hover:text-red-500"><XIcon /></button>
+                                                    </div>
+                                                    {task.notifications && (
+                                                        <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+                                                            <div className="flex items-center gap-1">
+                                                                <BellIcon />
+                                                                {task.times && task.times.map((time, idx) => (
+                                                                    <span key={idx} className="bg-zinc-800 px-2 py-1 rounded">{time}</span>
+                                                                ))}
+                                                            </div>
+                                                            {task.recurring && (
+                                                                <div className="flex items-center gap-1 bg-zinc-800 px-2 py-1 rounded">
+                                                                    <RepeatIcon />
+                                                                    <span>Daily</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -681,9 +801,10 @@
                         </div>
                     </div>
 
-                    {/* Add Goal Overlay - Slides from BOTTOM */}
+                    {/* Add Goal Overlay - HALF PAGE from BOTTOM */}
+                    <div className={`addgoal-backdrop ${showAddTask ? 'show' : ''}`} onClick={() => setShowAddTask(false)}></div>
                     <div className={`addgoal-overlay ${showAddTask ? 'show' : ''}`}>
-                        <div className="h-screen bg-black flex flex-col">
+                        <div className="h-full bg-black flex flex-col">
                             <div className="bg-zinc-900 border-b border-zinc-800 px-6 py-4">
                                 <div className="flex items-center justify-between">
                                     <button onClick={() => setShowAddTask(false)} className="text-gray-400">Cancel</button>
@@ -691,7 +812,7 @@
                                     <div className="w-16"></div>
                                 </div>
                             </div>
-                            <div className="flex-1 p-6">
+                            <div className="flex-1 p-6 overflow-auto">
                                 <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-400 mb-2">Timeframe</label>
                                     <select value={selectedTimeframe} onChange={(e) => setSelectedTimeframe(e.target.value)}
@@ -702,7 +823,7 @@
                                         <option value="yearly">Yearly</option>
                                     </select>
                                 </div>
-                                <div>
+                                <div className="mb-4">
                                     <label className="block text-sm font-medium text-gray-400 mb-2">Goal</label>
                                     <input type="text" 
                                         value={newTaskText} 
@@ -711,8 +832,58 @@
                                         className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white placeholder-gray-600" 
                                         onKeyPress={(e) => e.key === 'Enter' && addTask()} />
                                 </div>
+                                
+                                {/* Notifications Toggle */}
+                                <div className="mb-4">
+                                    <button 
+                                        onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                                        className="flex items-center gap-2 text-gray-400 hover:text-white">
+                                        {notificationsEnabled ? <BellIcon /> : <BellOffIcon />}
+                                        <span className="text-sm">Enable Notifications</span>
+                                    </button>
+                                </div>
+
+                                {/* Notification Times */}
+                                {notificationsEnabled && (
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">Notification Times</label>
+                                        {notificationTimes.map((time, idx) => (
+                                            <div key={idx} className="flex items-center gap-2 mb-2">
+                                                <input 
+                                                    type="time"
+                                                    value={time}
+                                                    onChange={(e) => updateNotificationTime(idx, e.target.value)}
+                                                    className="flex-1 px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-white"
+                                                />
+                                                {notificationTimes.length > 1 && (
+                                                    <button onClick={() => removeNotificationTime(idx)} className="text-gray-600 hover:text-red-500">
+                                                        <XIcon />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {notificationTimes.length < 3 && (
+                                            <button onClick={addNotificationTime} className="text-sm text-green-500 hover:text-green-400">
+                                                + Add another time
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Recurring Toggle (Only for Daily) */}
+                                {selectedTimeframe === 'daily' && (
+                                    <div className="mb-4">
+                                        <button 
+                                            onClick={() => setRecurringEnabled(!recurringEnabled)}
+                                            className={`flex items-center gap-2 ${recurringEnabled ? 'text-green-500' : 'text-gray-400'} hover:text-white`}>
+                                            <RepeatIcon />
+                                            <span className="text-sm">Recurring Daily Goal</span>
+                                        </button>
+                                        <p className="text-xs text-gray-600 mt-1 ml-7">Goal will reset every day at 12:01 AM</p>
+                                    </div>
+                                )}
                             </div>
-                            <div className="fab-container">
+                            <div className="px-6 pb-6">
                                 <button onClick={addTask}
                                     disabled={!newTaskText.trim()}
                                     className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:opacity-50 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2">
